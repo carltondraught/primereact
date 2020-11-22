@@ -45,6 +45,9 @@ export class ScrollableView extends Component {
         super(props);
         this.onHeaderScroll = this.onHeaderScroll.bind(this);
         this.onBodyScroll = this.onBodyScroll.bind(this);
+        // keep track of the current page to avoid calling onVirtualScroll for the same page,
+        // on the last page
+        this.page = 1;
     }
 
     componentDidMount() {
@@ -153,12 +156,21 @@ export class ScrollableView extends Component {
             let scrollBodyTop = this.scrollTable.style.top||'0';
 
             if(this.scrollBody.scrollTop + viewport > parseFloat(scrollBodyTop) + tableHeight || this.scrollBody.scrollTop < parseFloat(scrollBodyTop)) {
+
+                let page = Math.floor((this.scrollBody.scrollTop * pageCount) / (this.scrollBody.scrollHeight)) + 1;
+
+                if (this.page === page) {
+                    // refuse to refresh to the same page
+                    return;
+                }
+
+                this.page = page;
+
                 if (this.loadingTable) {
                     this.loadingTable.style.display = 'table';
                     this.loadingTable.style.top = this.scrollBody.scrollTop + 'px';
                 }
 
-                let page = Math.floor((this.scrollBody.scrollTop * pageCount) / (this.scrollBody.scrollHeight)) + 1;
                 if(this.props.onVirtualScroll) {
                     this.props.onVirtualScroll({
                         page: page
